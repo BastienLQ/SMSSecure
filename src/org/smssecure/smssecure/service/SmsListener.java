@@ -36,6 +36,8 @@ import java.util.ArrayList;
 
 public class SmsListener extends BroadcastReceiver {
 
+  private static final String TAG = SmsListener.class.getSimpleName();
+
   private static final String SMS_RECEIVED_ACTION  = Telephony.Sms.Intents.SMS_RECEIVED_ACTION;
   private static final String SMS_DELIVERED_ACTION = Telephony.Sms.Intents.SMS_DELIVER_ACTION;
 
@@ -127,13 +129,9 @@ public class SmsListener extends BroadcastReceiver {
                (intent.getAction().equals(SMS_RECEIVED_ACTION)) && isRelevant(context, intent))
     {
       Object[] pdus = (Object[])intent.getExtras().get("pdus");
-      ApplicationContext.getInstance(context).getJobManager().add(new SmsReceiveJob(context, pdus));
+      Log.w(TAG, "Scheduling SMS Received Job: " + pdus);
 
-//      Intent receivedIntent = new Intent(context, SendReceiveService.class);
-//      receivedIntent.setAction(SendReceiveService.RECEIVE_SMS_ACTION);
-//      receivedIntent.putExtra("ResultCode", this.getResultCode());
-//      receivedIntent.putParcelableArrayListExtra("text_messages",getAsTextMessages(intent));
-//      context.startService(receivedIntent);
+      ApplicationContext.getInstance(context).getJobManager().add(new SmsReceiveJob(context, pdus));
 
       abortBroadcast();
     }

@@ -45,14 +45,19 @@ public class SmsReceiveJob extends ContextJob {
 
   @Override
   public void onRun() {
+    Log.w(TAG, "onRun()");
     Optional<IncomingTextMessage> message = assembleMessageFragments(pdus);
 
     if (message.isPresent() && !isBlocked(message.get())) {
+      Log.w(TAG, "Inserting message...");
       Pair<Long, Long> messageAndThreadId = storeMessage(message.get());
+      Log.w(TAG, "Updating notification...");
       MessageNotifier.updateNotification(context, KeyCachingService.getMasterSecret(context), messageAndThreadId.second);
     } else if (message.isPresent()) {
       Log.w(TAG, "*** Received blocked SMS, ignoring...");
     }
+
+    Log.w(TAG, "Done...");
   }
 
   @Override
@@ -81,10 +86,13 @@ public class SmsReceiveJob extends ContextJob {
     Pair<Long, Long> messageAndThreadId;
 
     if (message.isSecureMessage()) {
+      Log.w(TAG, "Inserting secure message...");
       messageAndThreadId = database.insertMessageInbox((MasterSecret)null, message);
     } else if (masterSecret == null) {
+      Log.w(TAG, "Inserting secure message with null master secret...");
       messageAndThreadId = database.insertMessageInbox(MasterSecretUtil.getAsymmetricMasterSecret(context, null), message);
     } else {
+      Log.w(TAG, "Inserting plain old message...");
       messageAndThreadId = database.insertMessageInbox(masterSecret, message);
     }
 
@@ -100,7 +108,10 @@ public class SmsReceiveJob extends ContextJob {
   private Optional<IncomingTextMessage> assembleMessageFragments(Object[] pdus) {
     List<IncomingTextMessage> messages = new LinkedList<>();
 
+    Log.w(TAG, "Assembling PDUs: " + pdus.length);
+
     for (Object pdu : pdus) {
+      Log.w(TAG, "Adding PDU: " + pdu);
       SmsMessage msg = SmsMessage.createFromPdu((byte[]) pdu);
       if (msg != null){
         messages.add(new IncomingTextMessage(msg));
@@ -108,6 +119,7 @@ public class SmsReceiveJob extends ContextJob {
     }
 
     if (messages.isEmpty()) {
+      Log.w(TAG, "Empty messages list!");
       return Optional.absent();
     }
 
